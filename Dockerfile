@@ -3,8 +3,8 @@ RUN apk add go git
 
 FROM gobuild as build
 COPY . /code
-WORKDIR /code
-RUN go mod vendor && \
+RUN cd /code && \
+    go mod vendor && \
     go build -mod vendor
 
 FROM alpine
