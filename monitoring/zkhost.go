@@ -35,6 +35,32 @@ type ZKHost struct {
   Address string `yaml:"address"`
 }
 
+func (zk *ZKHost) Reset() error {
+  timeout, _ := time.ParseDuration("5s")
+
+  conn, err := net.DialTimeout("tcp", zk.Address, timeout)
+  if err != nil {
+    return err
+  }
+  defer conn.Close()
+
+  err = conn.SetDeadline(time.Now().Add(timeout))
+	if err != nil {
+		return err
+	}
+
+  _, err = conn.Write([]byte("srst"))
+  if err != nil {
+    return errors.Wrapf(err, "cannot send mntr command")
+  }
+
+  _, err = conn.Write([]byte("crst"))
+  if err != nil {
+    return errors.Wrapf(err, "cannot send mntr command")
+  }
+
+  return nil
+}
 
 func (zk *ZKHost) Monitor() (map[string]interface{}, error) {
   timeout, _ := time.ParseDuration("5s")

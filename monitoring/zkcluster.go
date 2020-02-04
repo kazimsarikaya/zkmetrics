@@ -28,6 +28,15 @@ type ZKCluster struct {
     Hosts []ZKHost `yaml:hosts`
 }
 
+func (cls *ZKCluster) Reset() error {
+  for _, h := range cls.Hosts {
+    err := h.Reset()
+    if (err != nil) {
+      log.Print("Cannot reset host metrics: " + h.Address + " ", err)
+    }
+  }
+  return nil
+}
 
 func (cls *ZKCluster) Monitor() (map[string]map[string]interface{}, error){
   result := make(map[string]map[string]interface{})
@@ -35,7 +44,7 @@ func (cls *ZKCluster) Monitor() (map[string]map[string]interface{}, error){
   for _, h := range cls.Hosts {
     mr, err := h.Monitor()
     if err != nil {
-      log.Fatal("Can not monitor zk host: " + h.Address, err)
+      log.Print("Can not monitor zk host: " + h.Address, err)
     } else {
       result[h.Address] = mr
     }

@@ -89,12 +89,19 @@ func RegisterMonitors(registry *prometheus.Registry) {
 }
 
 func MonitorCluster(config *Config,cls ZKCluster) {
+  var resetAfterCounter int = 0
   for {
     cmr, err := cls.Monitor()
+    resetAfterCounter += 1
+    if ( resetAfterCounter >= config.ResetAfter) {
+      log.Print("Reseting metrics")
+      cls.Reset()
+      resetAfterCounter = 0
+    }
 
     log.Print("Cluster metrics collected: " + cls.Name)
     if ( err != nil ) {
-      log.Fatal("At least one error at cluster monitoring", err)
+      log.Print("At least one error at cluster monitoring", err)
     }
 
     for h, data := range cmr {

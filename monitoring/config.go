@@ -31,6 +31,7 @@ type Config struct {
   Version string `yaml:"version"`
   Name string `yaml:"name"`
   QueryTime int `yaml:"queryTime"`
+  ResetAfter int `yaml:"resetAfter"`
   Clusters []ZKCluster `yaml:"clusters,omitempty"`
 }
 
