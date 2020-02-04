@@ -1,4 +1,4 @@
-package zookeeper
+package monitoring
 
 import (
   "net"
@@ -10,18 +10,17 @@ import (
   "strconv"
 
   "github.com/pkg/errors"
-
 )
 
-type ZK struct {
-  Host string
+type ZKHost struct {
+  Address string `yaml:"address"`
 }
 
 
-func (zk *ZK) Monitor() (map[string]interface{}, error) {
+func (zk *ZKHost) Monitor() (map[string]interface{}, error) {
   timeout, _ := time.ParseDuration("5s")
 
-  conn, err := net.DialTimeout("tcp", zk.Host, timeout)
+  conn, err := net.DialTimeout("tcp", zk.Address, timeout)
   if err != nil {
     return nil, err
   }

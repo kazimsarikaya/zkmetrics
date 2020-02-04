@@ -1,18 +1,16 @@
-package configparser
+package monitoring
 
 import (
   "io/ioutil"
   "path/filepath"
 
   "gopkg.in/yaml.v2"
+
 )
 
 type Config struct {
   Version string `yaml:"version"`
-  Clusters []struct {
-    Name string `yaml:"name"`
-    Hosts []string `yaml:hosts`
-  } `yaml:"clusters,omitempty"`
+  Clusters []ZKCluster `yaml:"clusters,omitempty"`
 }
 
 
@@ -32,7 +30,7 @@ func (cfg *Config) Print() string {
   for _, c := range cfg.Clusters {
     result += "(cluster name -> " + c.Name + ", hosts -> "
     for _, h := range c.Hosts {
-      result += h + ","
+      result += h.Address + ","
     }
     result += "), "
   }
