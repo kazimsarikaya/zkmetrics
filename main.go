@@ -53,7 +53,7 @@ func main() {
 
   handler := promhttp.HandlerFor(r, promhttp.HandlerOpts{})
 
-	monitoring.Monitor(config)
+	monitoring.MonitorAll(config)
 
 	http.Handle("/metrics", handler)
 	log.Fatal(http.ListenAndServe(*addr, nil))

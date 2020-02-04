@@ -88,80 +88,84 @@ func RegisterMonitors(registry *prometheus.Registry) {
   registry.MustRegister(follower)
 }
 
-func Monitor(config *Config) {
+func MonitorCluster(config *Config,cls ZKCluster) {
+  for {
+    cmr, err := cls.Monitor()
+
+    log.Print("Cluster metrics collected: " + cls.Name)
+    if ( err != nil ) {
+      log.Fatal("At least one error at cluster monitoring", err)
+    }
+
+    for h, data := range cmr {
+      latency.With(prometheus.Labels{"cluster_name": cls.Name,
+        "host_address": h,
+        "latency_type": "zk_avg_latency",
+        "server_state": data["zk_server_state"].(string)}).Set(data["zk_avg_latency"].(float64))
+
+      latency.With(prometheus.Labels{"cluster_name": cls.Name,
+        "host_address": h,
+        "latency_type": "zk_min_latency",
+        "server_state": data["zk_server_state"].(string)}).Set(data["zk_min_latency"].(float64))
+
+      latency.With(prometheus.Labels{"cluster_name": cls.Name,
+        "host_address": h,
+        "latency_type": "zk_max_latency",
+        "server_state": data["zk_server_state"].(string)}).Set(data["zk_max_latency"].(float64))
+
+      outstanding_requests.With(prometheus.Labels{"cluster_name": cls.Name,
+        "host_address": h,
+        "server_state": data["zk_server_state"].(string)}).Set(data["zk_outstanding_requests"].(float64))
+
+      packets.With(prometheus.Labels{"cluster_name": cls.Name,
+        "host_address": h,
+        "direction": "sent",
+        "server_state": data["zk_server_state"].(string)}).Set(data["zk_packets_received"].(float64))
+
+      packets.With(prometheus.Labels{"cluster_name": cls.Name,
+        "host_address": h,
+        "direction": "received",
+        "server_state": data["zk_server_state"].(string)}).Set(data["zk_packets_received"].(float64))
+
+      fd.With(prometheus.Labels{"cluster_name": cls.Name,
+        "host_address": h,
+        "type": "open",
+        "server_state": data["zk_server_state"].(string)}).Set(data["zk_open_file_descriptor_count"].(float64))
+
+      fd.With(prometheus.Labels{"cluster_name": cls.Name,
+        "host_address": h,
+        "type": "max",
+        "server_state": data["zk_server_state"].(string)}).Set(data["zk_max_file_descriptor_count"].(float64))
+
+      nodecnt.With(prometheus.Labels{"cluster_name": cls.Name,
+        "host_address": h,
+        "server_state": data["zk_server_state"].(string)}).Set(data["zk_znode_count"].(float64))
+
+      watchcnt.With(prometheus.Labels{"cluster_name": cls.Name,
+        "host_address": h,
+        "server_state": data["zk_server_state"].(string)}).Set(data["zk_watch_count"].(float64))
+
+      if( data["zk_server_state"].(string) == "leader" ) {
+        follower.With(prometheus.Labels{"cluster_name": cls.Name,
+          "type": "pending"}).Set(data["zk_pending_syncs"].(float64))
+
+        follower.With(prometheus.Labels{"cluster_name": cls.Name,
+          "type": "count"}).Set(data["zk_followers"].(float64))
+
+        follower.With(prometheus.Labels{"cluster_name": cls.Name,
+          "type": "synced"}).Set(data["zk_synced_followers"].(float64))
+      }
+    }
+
+    time.Sleep(time.Duration(config.QueryTime) * time.Second)
+  }
+}
+
+func MonitorAll(config *Config) {
   runtime.GOMAXPROCS(len(config.Clusters)+2)
   for _, cls := range config.Clusters {
-    go func() {
-      for {
-        cmr, err := cls.Monitor()
-
-        if ( err != nil ) {
-          log.Fatal("At least one error at cluster monitoring", err)
-        }
-
-        for h, data := range cmr {
-          latency.With(prometheus.Labels{"cluster_name": cls.Name,
-            "host_address": h,
-            "latency_type": "zk_avg_latency",
-            "server_state": data["zk_server_state"].(string)}).Set(data["zk_avg_latency"].(float64))
-
-          latency.With(prometheus.Labels{"cluster_name": cls.Name,
-            "host_address": h,
-            "latency_type": "zk_min_latency",
-            "server_state": data["zk_server_state"].(string)}).Set(data["zk_min_latency"].(float64))
-
-          latency.With(prometheus.Labels{"cluster_name": cls.Name,
-            "host_address": h,
-            "latency_type": "zk_max_latency",
-            "server_state": data["zk_server_state"].(string)}).Set(data["zk_max_latency"].(float64))
-
-          outstanding_requests.With(prometheus.Labels{"cluster_name": cls.Name,
-            "host_address": h,
-            "server_state": data["zk_server_state"].(string)}).Set(data["zk_outstanding_requests"].(float64))
-
-          packets.With(prometheus.Labels{"cluster_name": cls.Name,
-            "host_address": h,
-            "direction": "sent",
-            "server_state": data["zk_server_state"].(string)}).Set(data["zk_packets_received"].(float64))
-
-          packets.With(prometheus.Labels{"cluster_name": cls.Name,
-            "host_address": h,
-            "direction": "received",
-            "server_state": data["zk_server_state"].(string)}).Set(data["zk_packets_received"].(float64))
-
-          fd.With(prometheus.Labels{"cluster_name": cls.Name,
-            "host_address": h,
-            "type": "open",
-            "server_state": data["zk_server_state"].(string)}).Set(data["zk_open_file_descriptor_count"].(float64))
-
-          fd.With(prometheus.Labels{"cluster_name": cls.Name,
-            "host_address": h,
-            "type": "max",
-            "server_state": data["zk_server_state"].(string)}).Set(data["zk_max_file_descriptor_count"].(float64))
-
-          nodecnt.With(prometheus.Labels{"cluster_name": cls.Name,
-            "host_address": h,
-            "server_state": data["zk_server_state"].(string)}).Set(data["zk_znode_count"].(float64))
-
-          watchcnt.With(prometheus.Labels{"cluster_name": cls.Name,
-            "host_address": h,
-            "server_state": data["zk_server_state"].(string)}).Set(data["zk_watch_count"].(float64))
-
-          if( data["zk_server_state"].(string) == "leader" ) {
-            follower.With(prometheus.Labels{"cluster_name": cls.Name,
-              "type": "pending"}).Set(data["zk_pending_syncs"].(float64))
-
-            follower.With(prometheus.Labels{"cluster_name": cls.Name,
-              "type": "count"}).Set(data["zk_followers"].(float64))
-
-            follower.With(prometheus.Labels{"cluster_name": cls.Name,
-              "type": "synced"}).Set(data["zk_synced_followers"].(float64))
-          }
-        }
-
-        time.Sleep(time.Duration(config.QueryTime) * time.Second)
-      }
-    }()
+    log.Print("Monitor starting for " + cls.Name)
+    go MonitorCluster(config, cls)
   }
 
 }
