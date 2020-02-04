@@ -14,3 +14,5 @@ clusters: # one or more cluster
   hosts: # one or more host
   - address: "zkhost:2181"
 ```
+
+A grafana dashboard is [attached](./zk-grafana-dashboard.json)
