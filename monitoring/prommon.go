@@ -23,6 +23,7 @@ import (
   "log"
   "github.com/prometheus/client_golang/prometheus"
   "time"
+  "runtime"
 )
 
 var (
@@ -70,7 +71,7 @@ var (
 
   follower = prometheus.NewGaugeVec(
     prometheus.GaugeOpts{
-      Name: "zookeeper_monitor_followr",
+      Name: "zookeeper_monitor_follower",
       Help: "Zookeeper monitor follower info",
     },
     []string{"cluster_name", "type"})
@@ -88,7 +89,7 @@ func RegisterMonitors(registry *prometheus.Registry) {
 }
 
 func Monitor(config *Config) {
-
+  runtime.GOMAXPROCS(len(config.Clusters)+2)
   for _, cls := range config.Clusters {
     go func() {
       for {
