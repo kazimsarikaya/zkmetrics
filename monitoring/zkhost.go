@@ -51,7 +51,7 @@ func (zk *ZKHost) Monitor() (map[string]interface{}, error) {
       result[parts[0]]=parts[1]
     } else {
       t, _ := strconv.Atoi(parts[1])
-      result[parts[0]] = t
+      result[parts[0]] = float64(t)
     }
   }
 

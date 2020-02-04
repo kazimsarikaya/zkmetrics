@@ -29,7 +29,12 @@ func main() {
 
 
   r := prometheus.NewRegistry()
+
+	monitoring.RegisterMonitors(r)
+
   handler := promhttp.HandlerFor(r, promhttp.HandlerOpts{})
+
+	monitoring.Monitor(config)
 
 	http.Handle("/metrics", handler)
 	log.Fatal(http.ListenAndServe(*addr, nil))

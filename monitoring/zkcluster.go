@@ -1,7 +1,7 @@
 package monitoring
 
 import (
-  "github.com/pkg/errors"
+  "log"
 )
 
 type ZKCluster struct {
@@ -12,13 +12,15 @@ type ZKCluster struct {
 
 func (cls *ZKCluster) Monitor() (map[string]map[string]interface{}, error){
   result := make(map[string]map[string]interface{})
+  var err error = nil
   for _, h := range cls.Hosts {
     mr, err := h.Monitor()
     if err != nil {
-      return nil, errors.Wrapf(err, "Can not monitor zk host: " + h.Address)
+      log.Fatal("Can not monitor zk host: " + h.Address, err)
+    } else {
+      result[h.Address] = mr
     }
-    result[h.Address] = mr
   }
 
-  return result, nil
+  return result, err
 }

@@ -10,6 +10,8 @@ import (
 
 type Config struct {
   Version string `yaml:"version"`
+  Name string `yaml:"name"`
+  QueryTime int `yaml:"queryTime"`
   Clusters []ZKCluster `yaml:"clusters,omitempty"`
 }
 
@@ -26,7 +28,8 @@ func Parse(file string) (*Config, error) {
 }
 
 func (cfg *Config) Print() string {
-  result := "version -> " + cfg.Version + ", "
+  result := "version -> " + cfg.Version + ", " + "config name -> " +
+    cfg.Name + ", "
   for _, c := range cfg.Clusters {
     result += "(cluster name -> " + c.Name + ", hosts -> "
     for _, h := range c.Hosts {
