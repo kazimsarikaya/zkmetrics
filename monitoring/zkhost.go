@@ -27,6 +27,7 @@ import (
   "bytes"
   "strings"
   "strconv"
+  "log"
 
   "github.com/pkg/errors"
 )
@@ -92,11 +93,15 @@ func (zk *ZKHost) Monitor() (map[string]interface{}, error) {
   for s.Scan() {
     line := s.Text()
     parts := strings.SplitN(line, "\t", 2)
-    if parts[0] == "zk_version" || parts[0] == "zk_server_state" {
-      result[parts[0]]=parts[1]
+    if len(parts) != 2 {
+      log.Print("zk metric line: bad format: " + line)
     } else {
-      t, _ := strconv.Atoi(parts[1])
-      result[parts[0]] = float64(t)
+      if parts[0] == "zk_version" || parts[0] == "zk_server_state" {
+        result[parts[0]]=parts[1]
+      } else {
+        t, _ := strconv.Atoi(parts[1])
+        result[parts[0]] = float64(t)
+      }
     }
   }
 

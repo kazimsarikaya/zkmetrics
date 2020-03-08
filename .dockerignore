@@ -1,0 +1,6 @@
+vendor/
+.git/
+zkmetrics
+config.yaml
+zkmetrics.out
+.gitignore
